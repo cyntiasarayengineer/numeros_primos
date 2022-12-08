@@ -1,0 +1,59 @@
+using System.Collections.Concurrent;
+
+class Program
+{
+    private const int min = 2;
+    private static int max = 22;
+    private static readonly ConcurrentQueue<int> primos = new ConcurrentQueue<int>();
+    
+    // Regra de Definição dos Números Primos
+    private static void GerarPrimos(int start, int range)
+    {
+        var numeroPrimo = true;
+        var end = start + range;
+        for (var i = start; i < end; i++) 
+        {
+            for (var j = min; j < Math.Sqrt(end); j++)
+            {
+                if (i != j && i % j == 0)
+                {
+                    numeroPrimo = false;
+                    break;
+                }
+            }
+            if (numeroPrimo)
+            {
+                primos.Enqueue(i);
+            }
+            numeroPrimo = true;
+        }
+    }
+    
+    // Regra de Definição da Thread
+    private static void Main(string[] args)
+    {
+        var threadCount = Convert.ToInt32(Console.ReadLine());
+        var threads = new Thread[threadCount];
+        var range = (max - min) / threadCount;
+        var start = min;
+        for (var i = 0; i < threadCount - 1; i++)
+        {
+            var startl = start;
+            threads[i] = new Thread(() => GerarPrimos(startl, range));
+            start += range;
+            threads[i].Start();
+        }
+        threads[threadCount - 1] = new Thread(() => GerarPrimos(start, range + (max - min) % threadCount));
+        threads[threadCount - 1].Start();
+        for (var i = 0; i < threadCount; i++)
+            threads[i].Join();
+        PrintPrimes();
+    }
+    
+    // Exibição dos números primos
+    private static void PrintPrimes()
+    {
+        foreach (var i in primos)
+            Console.WriteLine(i);
+    }
+}
